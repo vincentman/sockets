@@ -8,8 +8,9 @@ def load_config():
     parser.read('config.ini')
     config['host'] = parser['Server'].get('host', '127.0.0.1')
     config['port'] = parser['Server'].getint('port', '9990')
-    config['connections'] = parser['Server'].getint('connections', '10')
+    config['queue_size_for_listen'] = parser['Server'].getint('queue_size_for_listen', '5')
     config['recv_buf_size'] = parser['Server'].getint('recv_buf_size', '4096')
+    config['thread_pool_max_workers'] = parser['Server'].getint('thread_pool_max_workers', '4096')
     return config
 
 

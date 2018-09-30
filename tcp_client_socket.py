@@ -12,10 +12,16 @@ if __name__ == '__main__':
     print('config =>', config)
 
     try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        write_log('client', 'UDP socket created successfully...')
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        write_log('client', 'TCP socket created successfully...')
     except OSError as os_err:
         write_log('client', '[ERROR]Create socket, OSError: %s' % os_err)
+        sys.exit(1)
+
+    try:
+        sock.connect((config['host'], config['port']))
+    except OSError as os_err:
+        write_log('client', '[ERROR]Connect socket, OSError: %s' % os_err)
         sys.exit(1)
 
     while True:
@@ -23,12 +29,12 @@ if __name__ == '__main__':
             data = pickle.dumps(detections)
             data = zlib.compress(data)
             if len(data) > config['recv_buf_size']:
-                write_log('client', '[WARN]Data exceeds server buffer size. Drop data!!')
+                write_log('client', '[WARN]Data exceeds buffer size of server. Drop data!!')
                 time.sleep(1)
                 continue
             write_log('client', 'Send %d bytes data...' % len(data))
             write_log('client', 'Data...%s' % detections, False)
-            sent_bytes = sock.sendto(data, (config['host'], config['port']))
+            sent_bytes = sock.send(data)
             write_log('client', '%d bytes data sent...' % sent_bytes)
             if len(data) != sent_bytes:
                 write_log('client', '[WARN]Not all data sent completely!!')
