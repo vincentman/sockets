@@ -8,13 +8,13 @@ detections = [{"name": "name1", "age": 18, "gender": "male"}, {"name": "name2", 
 
 
 if __name__ == '__main__':
-    config = get_server_config()
+    config = load_config()
     print('server config =>', config)
 
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    except socket.error as socket_error:
-        write_log('client', '[ERROR]socket.error: %s\n' % socket_error)
+    except OSError as os_err:
+        write_log('server', '[ERROR]OSError: %s' % os_err)
         sys.exit(1)
 
     while True:

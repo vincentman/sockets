@@ -6,13 +6,13 @@ import zlib
 
 
 if __name__ == '__main__':
-    config = get_server_config()
+    config = load_config()
     print('server config =>', config)
 
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    except socket.error as socket_error:
-        write_log('server', '[ERROR]socket.error: %s\n' % socket_error)
+    except OSError as os_err:
+        write_log('server', '[ERROR]OSError: %s' % os_err)
         sys.exit(1)
 
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # reuse socket
@@ -33,7 +33,7 @@ if __name__ == '__main__':
             write_log('server', '[ERROR]KeyboardInterrupt')
             break
         except OSError as os_err:
-            write_log('server', '[ERROR]Exception: %s' % os_err)
+            write_log('server', '[ERROR]OSError: %s' % os_err)
             continue
         except Exception as e:
             write_log('server', '[ERROR]Exception: %s' % e)
