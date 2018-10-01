@@ -6,16 +6,14 @@ import zlib
 
 detections = [{"name": "name1", "age": 18, "gender": "male"}, {"name": "name2", "age": 20, "gender": "female"}]
 
-
 if __name__ == '__main__':
-    config = load_config()
-    print('config =>', config)
+    logger = logging.getLogger('udp_client')
 
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        write_log('client', 'UDP socket created successfully...')
+        logger.info('UDP socket created successfully...')
     except OSError as os_err:
-        write_log('client', '[ERROR]Create socket, OSError: %s' % os_err)
+        logger.error('Create socket, OSError: %s' % os_err)
         sys.exit(1)
 
     while True:
@@ -23,22 +21,22 @@ if __name__ == '__main__':
             data = pickle.dumps(detections)
             data = zlib.compress(data)
             if len(data) > config['recv_buf_size']:
-                write_log('client', '[WARN]Data exceeds server buffer size. Drop data!!')
+                logger.warning('Data exceeds server buffer size. Drop data!!')
                 time.sleep(1)
                 continue
-            write_log('client', 'Send %d bytes data...' % len(data))
-            write_log('client', 'Data...%s' % detections, False)
+            logger.info('Send %d bytes data...' % len(data))
+            logger.debug('Data...%s' % detections)
             sent_bytes = sock.sendto(data, (config['host'], config['port']))
-            write_log('client', '%d bytes data sent...' % sent_bytes)
+            logger.info('%d bytes data sent...' % sent_bytes)
             if len(data) != sent_bytes:
-                write_log('client', '[WARN]Not all data sent completely!!')
+                logger.warning('Not all data sent completely!!')
             time.sleep(1)
         except KeyboardInterrupt as key_interrupt:
-            write_log('client', '[ERROR]KeyboardInterrupt')
+            logger.error('KeyboardInterrupt~~~')
             break
         except Exception as e:
-            write_log('client', '[ERROR]Exception: %s' % e)
+            logger.error('Exception: %s' % e)
             break
 
-    write_log('client', 'Close socket~~~')
+    logger.info('Close socket~~~')
     sock.close()

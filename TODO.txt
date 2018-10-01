@@ -1,2 +1,3 @@
 X) TCP
 X) multi-thread on TCP server
+X) logging
