@@ -26,7 +26,7 @@ if __name__ == '__main__':
                 print('No data received...')
             else:
                 logger.info('Received %d bytes data from %s:%d' % (len(data), host, port))
-                data = zlib.decompress(data)
+                # data = zlib.decompress(data)
                 detections = pickle.loads(data)
                 logger.debug('Data...%s' % detections)
         except KeyboardInterrupt:
