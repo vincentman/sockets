@@ -1,4 +1,4 @@
 X) TCP
 X) multi-thread on TCP server
 X) logging
-split and merge data
+X) fragment and merge data

@@ -5,6 +5,27 @@ import pickle
 import zlib
 import logging
 
+client_data = {}
+
+
+def assemble_data(data, client):
+    if client not in client_data:
+        bs = bytearray()
+        if data[0] == b'0x02':
+            logger.info('Assemble data, data have only one part...')
+    else:
+        bs = client_data[client]
+    bs.extend(data[1:])
+    # logger.info('Assemble data, header:0x%02x, payload size:%d' % (data[0], len(data[1:])))
+    if data[0] == 0x02:
+        logger.info('Assemble data, final part, payload size:%d' % len(data[1:]))
+        logger.info('Data merged from %s, data size:%d' % (client, len(bs)))
+        client_data.update({client: bytearray()})
+        return bs
+    elif data[0] == 0x01:
+        logger.info('Assemble data, payload size:%d' % len(data[1:]))
+        client_data.update({client: bs})
+
 
 if __name__ == '__main__':
     logger = logging.getLogger('udp_server')
@@ -21,14 +42,16 @@ if __name__ == '__main__':
 
     while True:
         try:
-            data, (host, port) = sock.recvfrom(config['recv_buf_size'])
-            if not data:
+            recv_bytes, (host, port) = sock.recvfrom(config['recv_buf_size'])
+            if not recv_bytes:
                 print('No data received...')
             else:
-                logger.info('Received %d bytes data from %s:%d' % (len(data), host, port))
-                # data = zlib.decompress(data)
-                detections = pickle.loads(data)
-                logger.debug('Data...%s' % detections)
+                logger.info('UDP socket, received %d bytes data from %s:%d' % (len(recv_bytes), host, port))
+                data = assemble_data(recv_bytes, '%s:%d' % (host, port))
+                if data != None:
+                    # data = zlib.decompress(data)
+                    detections = pickle.loads(data)
+                    logger.debug("Original Data...\n%s" % detections)
         except KeyboardInterrupt:
             logger.error('KeyboardInterrupt~~~')
             break

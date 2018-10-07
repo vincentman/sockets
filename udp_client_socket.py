@@ -8,19 +8,38 @@ detections = [{"name": "name1", "age": 18, "gender": "male"}, {"name": "name2", 
 
 
 def send(sock, data):
-    logger.info('Send %d bytes data...' % len(data))
+    logger.info('UDP socket, send %d bytes data...' % len(data))
     sent_bytes = sock.sendto(data, (config['host'], config['port']))
-    logger.info('%d bytes data sent...' % sent_bytes)
+    logger.info('UDP socket, %d bytes data sent...' % sent_bytes)
     if len(data) != sent_bytes:
         logger.warning('Not all data sent completely!!')
     time.sleep(1)
 
 
 def get_send_bytes(header, payload):
-    send_bytes = bytearray()
-    send_bytes.append(header)
-    send_bytes.extend(payload)
-    return send_bytes
+    bs = bytearray()
+    bs.append(header)
+    bs.extend(payload)
+    return bs
+
+
+def fragment_data(data):
+    payload_size = config['recv_buf_size'] - 1
+    if len(data) <= payload_size:
+        logger.info('Data have only one part, payload size:%d' % len(data))
+        send(sock, get_send_bytes(0x02, data))
+    else:
+        if len(data) % payload_size == 0:
+            chunks = len(data) // payload_size
+        else:
+            chunks = len(data) // payload_size + 1
+        for i in range(chunks - 1):
+            part = data[i * payload_size:(i + 1) * payload_size]
+            logger.info('Fragment data.....Part %d-th, payload size:%d' % ((i + 1), len(part)))
+            send(sock, get_send_bytes(0x01, part))
+        part = data[(i + 1) * payload_size:]
+        logger.info('Fragment data.....Part %d-th(final), payload size:%d' % ((i + 2), len(part)))
+        send(sock, get_send_bytes(0x02, part))
 
 
 if __name__ == '__main__':
@@ -35,53 +54,10 @@ if __name__ == '__main__':
 
     while True:
         try:
-            # with open('temp', 'wb') as f:
-            #     f.write(detections)
-            # with open('temp', 'rb') as f:
-            #     print(f.read(60))
-            # [d[i:i + 1] for i in range(len(data))]
-            payload_size = config['recv_buf_size'] - 1
+            logger.debug("Original data...\n%s" % detections)
             data = pickle.dumps(detections)
-            if len(data) <= payload_size:
-                send(sock, get_send_bytes(0x02, data))
-            else:
-                # if len(data) % payload_size == 0:
-                #     chunks = len(data) // payload_size
-                #     for i in range(chunks - 1):
-                #         part = data[i * payload_size:(i + 1) * payload_size]
-                #         send(sock, get_send_bytes(0x01, part))
-                #     part = data[(i + 1) * payload_size:len(data)]
-                #     send(sock, get_send_bytes(0x02, part))
-                # else:
-                #     chunks = len(data) // payload_size + 1
-                #     for i in range(chunks-1):
-                #         part = data[i * payload_size:(i + 1) * payload_size]
-                #         send(sock, get_send_bytes(0x01, part))
-                #     part = data[(i + 1) * payload_size:len(data)]
-                #     send(sock, get_send_bytes(0x02, part))
-                if len(data) % payload_size == 0:
-                    chunks = len(data) // payload_size
-                else:
-                    chunks = len(data) // payload_size + 1
-                for i in range(chunks - 1):
-                    part = data[i * payload_size:(i + 1) * payload_size]
-                    send(sock, get_send_bytes(0x01, part))
-                part = data[(i + 1) * payload_size:len(data)]
-                send(sock, get_send_bytes(0x02, part))
-
-            # data = pickle.dumps(detections)
-            # data = zlib.compress(data)
-            # if len(data) > config['recv_buf_size']:
-            #     logger.warning('Data exceeds server buffer size. Drop data!!')
-            #     time.sleep(1)
-            #     continue
-            # logger.info('Send %d bytes data...' % len(data))
-            # logger.debug('Data...%s' % detections)
-            # sent_bytes = sock.sendto(data, (config['host'], config['port']))
-            # logger.info('%d bytes data sent...' % sent_bytes)
-            # if len(data) != sent_bytes:
-            #     logger.warning('Not all data sent completely!!')
-            # time.sleep(1)
+            logger.info('Pickle data length: %d bytes' % len(data))
+            fragment_data(data)
         except KeyboardInterrupt as key_interrupt:
             logger.error('KeyboardInterrupt~~~')
             break
