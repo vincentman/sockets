@@ -8,23 +8,26 @@ import logging
 client_data = {}
 
 
-def assemble_data(data, client):
+def reassemble_data(data, client):
     if client not in client_data:
         bs = bytearray()
+        pkt_seq = 0
         if data[0] == b'0x02':
-            logger.info('Assemble data, data have only one part...')
+            logger.info('Data have only one part...')
     else:
-        bs = client_data[client]
+        pkt_seq, bs = client_data[client]
     bs.extend(data[1:])
-    # logger.info('Assemble data, header:0x%02x, payload size:%d' % (data[0], len(data[1:])))
+    pkt_seq += 1
+    # logger.info('Reassemble data, header:0x%02x, payload size:%d' % (data[0], len(data[1:])))
     if data[0] == 0x02:
-        logger.info('Assemble data, final part, payload size:%d' % len(data[1:]))
+        logger.info('Reassemble data.....Part %d-th(final), payload size:%d' % (pkt_seq, len(data[1:])))
         logger.info('Data merged from %s, data size:%d' % (client, len(bs)))
-        client_data.update({client: bytearray()})
+        client_data.update({client: (0, bytearray())})
         return bs
     elif data[0] == 0x01:
-        logger.info('Assemble data, payload size:%d' % len(data[1:]))
-        client_data.update({client: bs})
+        logger.info('Reassemble data.....Part %d-th, payload size:%d' % (pkt_seq, len(data[1:])))
+        logger.info('Reassemble data from %s, current cumulate size:%d' % (client, len(bs)))
+        client_data.update({client: (pkt_seq, bs)})
 
 
 if __name__ == '__main__':
@@ -47,7 +50,7 @@ if __name__ == '__main__':
                 print('No data received...')
             else:
                 logger.info('UDP socket, received %d bytes data from %s:%d' % (len(recv_bytes), host, port))
-                data = assemble_data(recv_bytes, '%s:%d' % (host, port))
+                data = reassemble_data(recv_bytes, '%s:%d' % (host, port))
                 if data != None:
                     # data = zlib.decompress(data)
                     detections = pickle.loads(data)
