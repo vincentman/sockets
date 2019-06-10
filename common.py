@@ -14,6 +14,8 @@ def load_config():
     config['thread_pool_max_workers'] = parser['Server'].getint('thread_pool_max_workers', '15')
     config['basic_log_level'] = parser['Default'].get('basic_log_level', 'DEBUG')
     config['console_log_level'] = parser['Default'].get('console_log_level', 'INFO')
+    config['to_server_host'] = parser['Client'].get('to_server_host', '127.0.0.1')
+    config['to_server_port'] = parser['Client'].getint('to_server_port', '9990')
     return config
 
 
